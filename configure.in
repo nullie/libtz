@@ -11,4 +11,6 @@ AM_PROG_LIBTOOL
 
 AC_HEADER_STDC
 
+gl_VISIBILITY
+
 AC_OUTPUT(Makefile src/Makefile)
