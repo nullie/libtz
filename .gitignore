@@ -14,3 +14,4 @@ libtool
 ltmain.sh
 missing
 *.la
+compile

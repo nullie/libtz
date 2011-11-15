@@ -11,6 +11,10 @@ AM_PROG_LIBTOOL
 
 AC_HEADER_STDC
 
+AM_PROG_CC_C_O
+
 gl_VISIBILITY
 
-AC_OUTPUT(Makefile src/Makefile)
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+
+AC_OUTPUT(Makefile src/Makefile tests/Makefile)
