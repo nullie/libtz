@@ -17,10 +17,10 @@ void fail_unless_time_equals(bt, sec, min, hour, mday, mon, year)
      int sec, min, hour, mday, mon, year;
 {
   fail_unless(bt->tm_sec == sec && bt->tm_min == min && bt->tm_hour == hour &&
-              bt->tm_mday == mday && bt->tm_mon + 1 == mon && bt->tm_year == year - 1900,
+              bt->tm_mday == mday && bt->tm_mon == mon && bt->tm_year == year,
               "%02d:%02d:%02d %02d.%02d.%04d != %02d:%02d:%02d %02d.%02d.%04d",
               bt->tm_sec, bt->tm_min, bt->tm_hour, bt->tm_mday, bt->tm_mon + 1, bt->tm_year + 1900,
-              sec, min, hour, mday, mon, year);
+              sec, min, hour, mday, mon + 1, year + 1900);
 }
 
 START_TEST(test_tz_alloc_free)
@@ -48,13 +48,21 @@ START_TEST(test_tz_localtime) {
 
   sp = tz_alloc(fullname);
 
-  struct tm st = {0, 0, 0, 1, 0, 111, 0, 0, 0};
+  struct tm st = {0, 0, 0, 1, 0, 112, 0, 0, 0};
 
   time_t t = timegm(&st);
 
   struct tm * bt = tz_localtime(sp, &t);
 
-  fail_unless_time_equals(bt, 0, 0, 5, 1, 1, 2011);
+  fail_unless_time_equals(bt, 0, 0, 6, 1, 0, 112);
+
+  struct tm st2 = {0, 0, 0, 1, 0, 111, 0, 0, 0};
+
+  t = timegm(&st2);
+
+  bt = tz_localtime(sp, &t);
+
+  fail_unless_time_equals(bt, 0, 0, 5, 1, 0, 111);
 
   tz_free(sp);
 }
@@ -74,7 +82,7 @@ START_TEST(test_tz_apia) {
 
   struct tm * bt = tz_localtime(sp, &t);
 
-  fail_unless_time_equals(bt, 0, 0, 14, 1, 1, 2012);
+  fail_unless_time_equals(bt, 0, 0, 14, 1, 0, 112);
 
   struct tm st2 = {0, 0, 0, 30, 11, 111, 0, 0, 0};
 
@@ -82,7 +90,50 @@ START_TEST(test_tz_apia) {
 
   bt = tz_localtime(sp, &t);
 
-  fail_unless_time_equals(bt, 0, 0, 14, 29, 12, 2011);
+  fail_unless_time_equals(bt, 0, 0, 14, 29, 11, 111);
+}
+END_TEST
+
+START_TEST(test_tz_gmt) {
+  const struct state *sp = tz_alloc("GMT-5");
+
+  struct tm st = {0, 0, 0, 1, 0, 112, 0, 0, 0};
+
+  time_t t = timegm(&st);
+
+  struct tm * bt = tz_localtime(sp, &t);
+
+  fail_unless_time_equals(bt, 0, 0, 5, 1, 0, 112);
+
+  tz_free(sp);
+}
+END_TEST
+
+START_TEST(test_tz_mktime) {
+  char fullname[FILENAME_MAX + 1];
+  const struct state *sp;
+
+  abspath(fullname, "Yekaterinburg", FILENAME_MAX);
+
+  sp = tz_alloc(fullname);
+
+  struct tm st = {0, 30, 22, 15, 10, 111};
+
+  time_t t = tz_mktime(sp, &st);
+
+  struct tm * bt = gmtime(&t);
+
+  fail_unless_time_equals(bt, 0, 30, 16, 15, 10, 111);
+
+  struct tm st2 = {0, 30, 22, 15, 10, 110};
+
+  t = tz_mktime(sp, &st2);
+
+  bt = gmtime(&t);
+
+  fail_unless_time_equals(bt, 0, 30, 17, 15, 10, 110);
+
+  tz_free(sp);
 }
 END_TEST
 
@@ -96,6 +147,8 @@ tz_suite(void)
   tcase_add_test(tc_core, test_tz_alloc_free);
   tcase_add_test(tc_core, test_tz_localtime);
   tcase_add_test(tc_core, test_tz_apia);
+  tcase_add_test(tc_core, test_tz_gmt);
+  tcase_add_test(tc_core, test_tz_mktime);
   suite_add_tcase(s, tc_core);
 
   return s;
