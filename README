@@ -1,0 +1,37 @@
+Library for handling time in different timezones. Based on Arthur David Olson tzcode.
+
+Usage:
+
+    #include <tz.h>
+
+    const struct state * sp = tz_alloc("Asia/Yekaterinburg");
+
+    struct tm st = {0, 0, 0, 1, 0, 112};
+
+    time_t t = timegm(&st);
+
+    // {0, 0, 6, 1, 0, 112}
+    struct tm * bt = tz_localtime(sp, &t);
+
+    struct tm st2 = {0, 0, 0, 1, 0, 111, 0, 0, 0};
+
+    t = timegm(&st2);
+
+    // {0, 0, 5, 1, 0, 111}
+    bt = tz_localtime(sp, &t);
+
+    struct tm st3 = {0, 30, 22, 15, 10, 111};
+
+    time_t t = tz_mktime(sp, &st);
+
+    // {0, 30, 16, 15, 10, 111}
+    struct tm * bt = gmtime(&t);
+
+    struct tm st4 = {0, 30, 22, 15, 10, 110};
+
+    t = tz_mktime(sp, &st4);
+
+    // {0, 30, 17, 15, 10, 110}
+    bt = gmtime(&t);
+
+    tz_free(sp);
